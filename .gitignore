@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+code/utils/tokenizer
 
 # C extensions
 *.so
