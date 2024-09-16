@@ -1,0 +1,8 @@
+{
+  "position_embedding_type": "relative_key",
+  "num_hidden_layers": 1,
+  "num_attention_heads": 44,
+  "hidden_size": 704,
+  "learning_rate": 0.00012903931441828192,
+  "model_size": 8999879
+}
