@@ -7,12 +7,14 @@ import torch
 import transformers as hf
 import typer
 
+from pepfunn.similarity import monomerFP
 from rdkit import Chem
 from rdkit.Chem import rdFingerprintGenerator
 from tqdm import tqdm
 from tqdm.contrib.concurrent import thread_map
 
 from utils.pepclm_tokenizer import SMILES_SPE_Tokenizer
+# from utils.pepland_inference.inference_pepland import Pepland
 
 
 def calculate_ecfp(dataset: str):
@@ -88,7 +90,7 @@ def calculate_molformer(dataset: str):
 
 def calculate_bilnlm(dataset: str):
     device = 'mps'
-    batch_size = 32
+    batch_size = 8
     log_dir = os.path.join(os.path.dirname(__file__), '..', 'model')
     out_path = os.path.join(os.path.dirname(__file__),
         '..', '..', 'reps', f'bilnlm_{dataset}.json')
@@ -160,7 +162,7 @@ def calculate_bilnlm(dataset: str):
 
 def calculate_pepclm(dataset: str):
     device = 'mps'
-    batch_size = 32
+    batch_size = 8
     out_path = os.path.join(os.path.dirname(__file__),
         '..', '..', 'reps', f'pepclm_{dataset}.json')
     if os.path.exists(out_path):
@@ -202,15 +204,69 @@ def calculate_pepclm(dataset: str):
     json.dump(fps, open(os.path.join(out_path), 'w'))
 
 
-def main(dataset: str):
-    print('Calculating ECFP representations...')
-    calculate_ecfp(dataset)
-    print('Calculating MolFormer-XL representations...')
-    calculate_molformer(dataset)
-    print('Calculating BILN-LM representations...')
-    calculate_bilnlm(dataset)
-    print('Calculating PeptideCLM representations...')
-    calculate_pepclm(dataset)
+def calculate_pepfunnfp(dataset: str):
+    out_path = os.path.join(
+        os.path.dirname(__file__),
+        '..', '..', 'reps', f'pepfunn_{dataset}.json'
+    )
+    os.makedirs((os.path.join(
+        os.path.dirname(__file__),
+        '..', '..', 'reps')), exist_ok=True)
+    if os.path.exists(out_path):
+        return json.load(open(out_path))
+    df = pd.read_csv(os.path.join(
+        os.path.dirname(__file__),
+        '..', '..', 'downstream_data', f'{dataset}.csv'
+    ))
+
+    def _get_fp(smile: str):
+        fp = monomerFP(smile, radius=2, nBits=2_048)
+        return fp
+
+    fps = thread_map(
+        _get_fp, df['BILN'], max_workers=8
+    )
+    fps = np.stack(fps).tolist()
+    json.dump(fps, open(os.path.join(out_path), 'w'))
+
+
+# def calculate_pepland(dataset: str):
+#     out_path = os.path.join(
+#         os.path.dirname(__file__),
+#         '..', '..', 'reps', f'ecfp_{dataset}.json'
+#     )
+#     os.makedirs((os.path.join(
+#         os.path.dirname(__file__),
+#         '..', '..', 'reps')), exist_ok=True)
+#     if os.path.exists(out_path):
+#         return json.load(open(out_path))
+#     df = pd.read_csv(os.path.join(
+#         os.path.dirname(__file__),
+#         '..', '..', 'downstream_data', f'{dataset}.csv'
+#     ))
+#     pepland = Pepland()
+#     fps = pepland.get_embeddings(df.SMILES.tolist())
+#     fps = np.stack(fps).tolist()
+#     json.dump(fps, open(os.path.join(out_path), 'w'))
+
+
+def main(dataset: str, rep: str):
+    if rep == 'ecfp':
+        print('Calculating ECFP representations...')
+        calculate_ecfp(dataset)
+    elif rep == 'molformer':
+        print('Calculating MolFormer-XL representations...')
+        calculate_molformer(dataset)
+    elif rep == 'bilnlm':
+        print('Calculating BILN-LM representations...')
+        calculate_bilnlm(dataset)
+    elif rep == 'pepclm':
+        print('Calculating PeptideCLM representations...')
+        calculate_pepclm(dataset)
+    # print('Calculating Pepland representations...')
+    # calculate_pepland(dataset)
+    # print('Calculating pepfunn fingerprint...')
+    # calculate_pepfunnfp(dataset)
 
 
 if __name__ == '__main__':

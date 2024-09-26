@@ -1,3 +1,6 @@
+"""Code adapted from the PeptideCLM
+Project: https://github.com/AaronFeller/PeptideCLM
+"""
 import collections
 import logging
 import os

@@ -1,0 +1,8 @@
+warm_start:
+  type: bool
+
+max_iter_predict:
+  type: int
+  min: 5
+  max: 150
+  log: False
