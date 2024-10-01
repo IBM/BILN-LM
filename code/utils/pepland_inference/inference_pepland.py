@@ -12,6 +12,7 @@ import torch.nn as nn
 import numpy as np
 import pandas as pd
 import dgl
+from tqdm import tqdm
 
 from omegaconf import OmegaConf
 from .process import Mol2HeteroGraph
@@ -78,7 +79,7 @@ class Pepland:
 
     def get_embeddings(self, smiles: List[str]) -> List[torch.Tensor]:
         graphs = []
-        for i, smi in enumerate(smiles):
+        for i, smi in enumerate(tqdm(smiles)):
             try:
                 sys.path.append(os.path.dirname(
                     os.path.dirname(self.root_dir)))

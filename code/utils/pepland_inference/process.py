@@ -10,7 +10,6 @@ import pandas as pd
 from rdkit import Chem
 import torch
 import dgl
-import random
 from rdkit.Chem.BRICS import FindBRICSBonds, BreakBRICSBonds
 from rdkit.Chem import ChemicalFeatures
 from rdkit.Chem import MACCSkeys
@@ -18,7 +17,7 @@ from rdkit import RDConfig
 from rdkit import RDLogger                                                                                                                                                              
 RDLogger.DisableLog('rdApp.*')  
 import os
-from tokenizer.pep2fragments import get_cut_bond_idx, get_atom_parentAA
+from .tokenizer.pep2fragments import get_cut_bond_idx, get_atom_parentAA
 
 
 fdefName = os.path.join(RDConfig.RDDataDir,'BaseFeatures.fdef')

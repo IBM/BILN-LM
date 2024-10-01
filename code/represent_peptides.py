@@ -14,7 +14,7 @@ from tqdm import tqdm
 from tqdm.contrib.concurrent import thread_map
 
 from utils.pepclm_tokenizer import SMILES_SPE_Tokenizer
-# from utils.pepland_inference.inference_pepland import Pepland
+from utils.pepland_inference.inference_pepland import Pepland
 
 
 def calculate_ecfp(dataset: str):
@@ -230,24 +230,30 @@ def calculate_pepfunnfp(dataset: str):
     json.dump(fps, open(os.path.join(out_path), 'w'))
 
 
-# def calculate_pepland(dataset: str):
-#     out_path = os.path.join(
-#         os.path.dirname(__file__),
-#         '..', '..', 'reps', f'ecfp_{dataset}.json'
-#     )
-#     os.makedirs((os.path.join(
-#         os.path.dirname(__file__),
-#         '..', '..', 'reps')), exist_ok=True)
-#     if os.path.exists(out_path):
-#         return json.load(open(out_path))
-#     df = pd.read_csv(os.path.join(
-#         os.path.dirname(__file__),
-#         '..', '..', 'downstream_data', f'{dataset}.csv'
-#     ))
-#     pepland = Pepland()
-#     fps = pepland.get_embeddings(df.SMILES.tolist())
-#     fps = np.stack(fps).tolist()
-#     json.dump(fps, open(os.path.join(out_path), 'w'))
+def calculate_pepland(dataset: str):
+    print('pepland')
+    out_path = os.path.join(
+        os.path.dirname(__file__),
+        '..', '..', 'reps', f'pepland_{dataset}.json'
+    )
+    os.makedirs((os.path.join(
+        os.path.dirname(__file__),
+        '..', '..', 'reps')), exist_ok=True)
+    if os.path.exists(out_path):
+        return json.load(open(out_path))
+    print('loading data')
+    df = pd.read_csv(os.path.join(
+        os.path.dirname(__file__),
+        '..', '..', 'downstream_data', f'{dataset}.csv'
+    ))
+    print('here')
+    pepland = Pepland()
+    print('here 2')
+    fps = pepland.get_embeddings(df.SMILES.tolist())
+    print('here 3')
+    fps = np.stack(fps).tolist()
+    print(fps)
+    json.dump(fps, open(os.path.join(out_path), 'w'))
 
 
 def main(dataset: str, rep: str):
@@ -263,8 +269,9 @@ def main(dataset: str, rep: str):
     elif rep == 'pepclm':
         print('Calculating PeptideCLM representations...')
         calculate_pepclm(dataset)
-    # print('Calculating Pepland representations...')
-    # calculate_pepland(dataset)
+    elif rep == 'pepland':
+        print('Calculating Pepland representations...')
+        calculate_pepland(dataset)
     # print('Calculating pepfunn fingerprint...')
     # calculate_pepfunnfp(dataset)
 
