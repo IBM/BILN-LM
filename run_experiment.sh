@@ -2,7 +2,7 @@ dataset=nc-binding
 model=svm
 rep=bilnlm
 
-python BILN-LM/code/download_data.py data --collection downstream
+python BILN-LM/code/download_data.py downstream_data --collection downstream
 
 for dataset in c-binding c-cpp c-sol nc-binding nc-cpp; do
     for model in svm lightgbm; do
