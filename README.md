@@ -10,6 +10,7 @@ pip install transformers[torch] datasets tokenizers mapchiral molfeat rdkit scip
 ```
 
 ```bash
+pip install git+https://github.com/Boehringer-Ingelheim/pyPept.git
 pip install SmilesPE omegaconf
 conda install dgl 
 ```
