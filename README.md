@@ -6,7 +6,7 @@ BILN Language Model for describing modified and non-modified peptides
 You will need to install the following packages:
 
 ```bash
-pip install transformers[torch] datasets tokenizers mapchiral molfeat rdkit scipy scikit-learn tqdm optuna typer tensorboard lightgbm xgboost
+pip install transformers[torch] datasets tokenizers mapchiral molfeat rdkit scipy scikit-learn tqdm optuna typer tensorboard lightgbm xgboost IPython
 ```
 
 ```bash
