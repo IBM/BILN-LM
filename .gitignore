@@ -2,9 +2,6 @@
 __pycache__/
 *.py[cod]
 *$py.class
-code/utils/tokenizer
-code/utils/pepland_inference/cpkt
-code/utils/pepland_inference/tokenizer
 
 # C extensions
 *.so
