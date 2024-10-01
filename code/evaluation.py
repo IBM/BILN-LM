@@ -332,7 +332,8 @@ def main(dataset: str, model: str, similarity_metric: str,
         'results_distance'
     )
     results_path = os.path.join(
-        results_dir, f'{dataset}_{model}_{similarity_metric}_{fp}.csv'
+        results_dir,
+        f'{dataset}_{model}_{similarity_metric}_{fp}_{representation}.csv'
     )
     os.makedirs(results_dir, exist_ok=True)
 
