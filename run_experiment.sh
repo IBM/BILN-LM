@@ -2,8 +2,9 @@ dataset=nc-binding
 model=svm
 rep=bilnlm
 
-python BILN-LM/code/download_data.py downstream_data --collection downstream
-
+if [[ ${1} == "download" ]]; then
+    python BILN-LM/code/download_data.py downstream_data --collection downstream
+fi
 for dataset in c-binding c-cpp c-sol nc-binding nc-cpp; do
     for model in svm lightgbm; do
         for rep in ecfp molformer bilnlm pepclm pepland; do
