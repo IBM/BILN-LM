@@ -231,7 +231,6 @@ def calculate_pepfunnfp(dataset: str):
 
 
 def calculate_pepland(dataset: str):
-    print('pepland')
     out_path = os.path.join(
         os.path.dirname(__file__),
         '..', '..', 'reps', f'pepland_{dataset}.json'
@@ -241,18 +240,13 @@ def calculate_pepland(dataset: str):
         '..', '..', 'reps')), exist_ok=True)
     if os.path.exists(out_path):
         return json.load(open(out_path))
-    print('loading data')
     df = pd.read_csv(os.path.join(
         os.path.dirname(__file__),
         '..', '..', 'downstream_data', f'{dataset}.csv'
     ))
-    print('here')
     pepland = Pepland()
-    print('here 2')
     fps = pepland.get_embeddings(df.SMILES.tolist())
-    print('here 3')
     fps = np.stack(fps).tolist()
-    print(fps)
     json.dump(fps, open(os.path.join(out_path), 'w'))
 
 
