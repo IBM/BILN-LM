@@ -249,7 +249,7 @@ def define_hestia_generator(
     fp: str
 ) -> HestiaDatasetGenerator:
     sim_args = SimilarityArguments(
-        data_type='small_molecule', similarity_metric=fp,
+        data_type='small molecule', similarity_metric=fp,
         field_name='SMILES', min_threshold=0.,
         threads=8, bits=2_048, radius=2, distance=similarity_metric
     )
