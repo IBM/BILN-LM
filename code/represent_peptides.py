@@ -48,7 +48,7 @@ def calculate_ecfp(dataset: str):
 
 
 def calculate_molformer(dataset: str):
-    device = 'mps'
+    device = 'cpu'
     batch_size = 32
     out_path = os.path.join(os.path.dirname(__file__),
         '..', '..', 'reps', f'molformer_{dataset}.json')
@@ -89,7 +89,7 @@ def calculate_molformer(dataset: str):
 
 
 def calculate_bilnlm(dataset: str):
-    device = 'mps'
+    device = 'cpu'
     batch_size = 8
     log_dir = os.path.join(os.path.dirname(__file__), '..', 'model')
     out_path = os.path.join(os.path.dirname(__file__),
@@ -161,7 +161,7 @@ def calculate_bilnlm(dataset: str):
 
 
 def calculate_pepclm(dataset: str):
-    device = 'mps'
+    device = 'cpu'
     batch_size = 8
     out_path = os.path.join(os.path.dirname(__file__),
         '..', '..', 'reps', f'pepclm_{dataset}.json')
