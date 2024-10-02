@@ -14,7 +14,7 @@ pip install git+https://github.com/Boehringer-Ingelheim/pyPept.git
 pip install git+https://github.com/novonordisk-research/pepfunn.git
 
 pip install SmilesPE omegaconf mlflow
-conda install dgl 
+conda install dgl -c conda-forge
 ```
 
 ## 1. Download data
