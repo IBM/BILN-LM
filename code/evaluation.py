@@ -298,7 +298,7 @@ def experiment(dataset: str, model: str, similarity_metric: str,
     else:
         hdg = define_hestia_generator(df, similarity_metric, fp)
         hdg.save_precalculated(part_path)
-    for th, partitions in hdg.get_partitions():
+    for th, partitions in hdg.get_partitions(filter=0.185):
         train_idx = partitions['train']
         valid_idx = partitions['valid']
         test_idx = partitions['test']
