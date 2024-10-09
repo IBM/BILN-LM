@@ -79,8 +79,8 @@ REGRESSION_MODELS = {
 }
 
 
-REGRESSION_TASKS = ['c-binding', 'nc-binding']
-CLASSIFICATION_TASKS = ['c-cpp', 'c-sol', 'nc-cpp']
+REGRESSION_TASKS = ['c-binding', 'nc-binding', 'nc-cpp']
+CLASSIFICATION_TASKS = ['c-cpp', 'c-sol']
 TASKS = CLASSIFICATION_TASKS + REGRESSION_TASKS
 
 
