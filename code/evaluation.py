@@ -246,11 +246,12 @@ def hpo(pred_task: str, learning_algorithm: Callable,
 def define_hestia_generator(
     df: pd.DataFrame,
     similarity_metric: str,
-    fp: str
+    fp: str,
+    radius: int
 ) -> HestiaDatasetGenerator:
     sim_args = SimilarityArguments(
         data_type='small molecule', similarity_metric=fp,
-        field_name='SMILES', min_threshold=0.,
+        field_name='SMILES', min_threshold=0., radius=radius,
         threads=8, bits=2_048, radius=2, distance=similarity_metric
     )
     hdg = HestiaDatasetGenerator(df)
@@ -263,7 +264,7 @@ def define_hestia_generator(
 
 def experiment(dataset: str, model: str, similarity_metric: str,
                fp: str, representation: str,
-               n_trials: int = 100, seed: int = 1):
+               n_trials: int = 100, seed: int = 1, radius: int = 2):
     global best_model
     part_dir = os.path.join(
         os.path.dirname(__file__), '..', '..', 'partitions'
@@ -272,7 +273,7 @@ def experiment(dataset: str, model: str, similarity_metric: str,
         os.path.dirname(__file__), '..', '..', 'downstream_data'
     )
     part_path = os.path.join(
-        part_dir, f"{dataset}_{similarity_metric}_{fp}.gz")
+        part_dir, f"{dataset}_{similarity_metric}_{fp}_{radius}.gz")
     os.makedirs(part_dir, exist_ok=True)
 
     np.random.seed(seed)
@@ -296,7 +297,7 @@ def experiment(dataset: str, model: str, similarity_metric: str,
         hdg = HestiaDatasetGenerator(df)
         hdg.from_precalculated(part_path)
     else:
-        hdg = define_hestia_generator(df, similarity_metric, fp)
+        hdg = define_hestia_generator(df, similarity_metric, fp, radius)
         hdg.save_precalculated(part_path)
     for th, partitions in hdg.get_partitions(filter=0.185):
         train_idx = partitions['train']
@@ -323,7 +324,7 @@ def experiment(dataset: str, model: str, similarity_metric: str,
 
 
 def main(dataset: str, model: str, similarity_metric: str,
-         fp: str, representation: str,
+         fp: str, representation: str, radius: int,
          n_trials: int = 200, n_seeds: int = 5):
     warnings.filterwarnings('ignore')
     optuna.logging.set_verbosity(optuna.logging.CRITICAL)
@@ -333,7 +334,7 @@ def main(dataset: str, model: str, similarity_metric: str,
     )
     results_path = os.path.join(
         results_dir,
-        f'{dataset}_{model}_{similarity_metric}_{fp}_{representation}.csv'
+        f'{dataset}_{model}_{similarity_metric}_{fp}_{radius}_{representation}.csv'
     )
     os.makedirs(results_dir, exist_ok=True)
 
@@ -342,7 +343,7 @@ def main(dataset: str, model: str, similarity_metric: str,
         # print(f'Experiment seed: {i}')
         result_df = experiment(
             dataset, model, similarity_metric,
-            fp, representation, n_trials, i
+            fp, representation, n_trials, i, radius
         )
         results_df = pd.concat([results_df, result_df])
     results_df.to_csv(results_path, index=False)
