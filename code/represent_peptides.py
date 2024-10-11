@@ -32,7 +32,7 @@ def calculate_ecfp(dataset: str):
         '..', '..', 'downstream_data', f'{dataset}.csv'
     ))
     fpgen = rdFingerprintGenerator.GetMorganGenerator(
-        radius=2, fpSize=2_048
+        radius=8, fpSize=2_048
     )
 
     def _get_fp(smile: str):
