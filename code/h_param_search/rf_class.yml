@@ -2,26 +2,13 @@ n_estimators:
   type: int
   min: 10
   max: 5000
-  log: False
-
-criterion:
-  type: categorical
-  values:
-    - gini
-    - entropy
-    - log_loss
+  log: True
 
 min_samples_split:
   type: int
   min: 2
   max: 100
   log: False
-
-max_features:
-  type: categorical
-  values:
-    - log2
-    - sqrt
 
 class_weight:
   type: fixed-string

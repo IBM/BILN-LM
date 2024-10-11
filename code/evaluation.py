@@ -238,7 +238,7 @@ def hpo(pred_task: str, learning_algorithm: Callable,
                 }
             return -result['mse']
     study.optimize(hpo_objective, n_trials,
-                   callbacks=[EarlyStoppingCallback(50, direction='maximize')],
+                   callbacks=[EarlyStoppingCallback(20, direction='maximize')],
                    show_progress_bar=True, gc_after_trial=False, n_jobs=10)
     return best_model
 
