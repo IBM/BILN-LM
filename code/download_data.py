@@ -1,4 +1,5 @@
 import os
+import pkg_resources
 import shutil
 import time
 import urllib
@@ -9,6 +10,50 @@ import typer
 
 import rdkit.Chem as Chem
 from pyPept.converter import Converter
+
+MONOMERS = []
+SPECIAL_1 = ['ac-', 'deca-', 'glyco-', 'medl-', 'Mono21-', 'Mono22-']
+SPECIAL_2 = ['-pip']
+CANONICAL = {
+    "ALA": "A", "ASP": "D", "GLU": "E", "PHE": "F", "HIS": "H",
+    "ILE": "I", "LYS": "K", "LEU": "L", "MET": "M", "GLY": "G",
+    "ASN": "N", "PRO": "P", "GLN": "Q", "ARG": "R", "SER": "S",
+    "THR": "T", "VAL": "V", "TRP": "W", "TYR": "Y", "CYS": "C"
+}
+
+
+def pepseqres2biln(biln: str) -> str:
+    new_biln = biln.upper()
+    for monomer in MONOMERS:
+        monomer = monomer.upper()
+        if (f'-{monomer}-' in biln or f'({monomer}-' in biln or
+           f'-{monomer}(' in biln):
+            new_biln = new_biln.replace(monomer, f'[{monomer}]')
+        elif monomer in SPECIAL_1 and f'{monomer}-' in biln:
+            new_biln = new_biln.replace(monomer, f'[{monomer}]')
+        elif monomer in SPECIAL_2 and f'-{monomer}' in biln:
+            new_biln = new_biln.replace(monomer, f'[{monomer}]')
+
+    for monomer in CANONICAL:
+        new_biln = new_biln.replace(monomer, CANONICAL[monomer])
+    return new_biln
+
+
+def prepare_resources():
+    temporal = []
+    file_path = pkg_resources.resource_filename('pepfunn', 'data/property.txt')
+
+    with open(file_path, 'r') as file:
+        data = file.read()
+
+    lines = data.split('\n')
+    for line in lines:
+        if line:
+            temporal.append(line.split()[0])
+
+    for mon in temporal:
+        if '-' in mon:
+            MONOMERS.append(mon)
 
 
 def fasta2smiles(seq: str) -> str:
@@ -23,14 +68,46 @@ def helm2biln(helm: str) -> str:
         return pd.NA
     b = Converter(helm=helm)
     biln = b.get_biln()
-    return biln
+    new_biln = biln.upper()
+    for monomer in MONOMERS:
+        monomer = monomer.upper()
+
+        if (f'-{monomer}-' in biln or f'({monomer}-' in biln or
+           f'-{monomer}(' in biln):
+            new_biln = new_biln.replace(monomer, f'[{monomer}]')
+        elif monomer in SPECIAL_1 and f'{monomer}-' in biln:
+            new_biln = new_biln.replace(monomer, f'[{monomer}]')
+        elif monomer in SPECIAL_2 and f'-{monomer}' in biln:
+            new_biln = new_biln.replace(monomer, f'[{monomer}]')
+
+    for monomer in CANONICAL:
+        new_biln = new_biln.replace(monomer, CANONICAL[monomer])
+    return new_biln
 
 
 def fasta2biln(seq: str) -> str:
-    return '-'.join(seq)
+    biln = '-'.join(seq)
+    new_biln = biln.upper()
+    for monomer in MONOMERS:
+        monomer = monomer.upper()
+
+        if (f'-{monomer}-' in biln or f'({monomer}-' in biln or
+           f'-{monomer}(' in biln):
+            new_biln = new_biln.replace(monomer, f'[{monomer}]')
+        elif monomer in SPECIAL_1 and f'{monomer}-' in biln:
+            new_biln = new_biln.replace(monomer, f'[{monomer}]')
+        elif monomer in SPECIAL_2 and f'-{monomer}' in biln:
+            new_biln = new_biln.replace(monomer, f'[{monomer}]')
+        elif monomer in CANONICAL:
+            new_biln = new_biln.replace(monomer, CANONICAL[monomer])
+    for monomer in CANONICAL:
+        new_biln = new_biln.replace(monomer, CANONICAL[monomer])
+
+    return new_biln
 
 
 def download_all(data_path: str, collection: str = 'all'):
+    prepare_resources()
     if os.path.exists(data_path):
         pass
         # raise RuntimeError(f'Warning! Path: {data_path} already exists')
@@ -127,7 +204,9 @@ def download_c_cpp(data_path: str) -> bool:
     df = pd.read_csv(out_path, header=None, names=['sequence', 'labels'])
     df['BILN'] = df['sequence'].apply(fasta2biln)
     df['SMILES'] = df['sequence'].apply(fasta2smiles)
-    df.dropna(inplace=True)
+    df = df[df.labels > -10]
+    df = df.dropna().reset_index(drop=True)
+
     df.to_csv(out_path, index=False)
     return True
 
@@ -157,7 +236,7 @@ def download_nc_binding(data_path: str) -> bool:
         return False
     df = pd.read_csv(out_path)
     df['SMILES'] = df['Merge_SMILES']
-    df['BILN'] = df['pep_SEQRES']
+    df['BILN'] = df['pep_SEQRES'].apply(pepseqres2biln)
     df['labels'] = df['affinity']
     df = df[['seq1', 'SMILES', 'BILN', 'labels']]
     df.dropna(inplace=True)
@@ -174,7 +253,7 @@ def download_c_binding(data_path: str) -> bool:
         return False
     df = pd.read_csv(out_path)
     df['SMILES'] = df['Merge_SMILES']
-    df['BILN'] = df['pep_SEQRES']
+    df['BILN'] = df['pep_SEQRES'].apply(pepseqres2biln)
     df['labels'] = df['affinity']
     df = df[['seq1', 'SMILES', 'BILN', 'labels']]
     df.dropna(inplace=True)
