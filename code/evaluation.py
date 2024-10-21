@@ -353,6 +353,7 @@ def main(dataset: str, model: str, similarity_metric: str,
 
     df = pd.read_csv(os.path.join(data_path, f'{dataset}.csv'))
     df['name'] = dataset
+
     if os.path.exists(part_path):
         hdg = HestiaDatasetGenerator(df)
         hdg.from_precalculated(part_path)
@@ -375,10 +376,9 @@ def main(dataset: str, model: str, similarity_metric: str,
 
     results_df = pd.DataFrame()
     for i in tqdm(range(n_seeds)):
-        # print(f'Experiment seed: {i}')
         result_df = experiment(
-            dataset, model, similarity_metric,
-            fp, representation, n_trials, i, radius
+            dataset, model, representation, hdg, df,
+            n_trials, i
         )
         results_df = pd.concat([results_df, result_df])
     results_df.to_csv(results_path, index=False)
