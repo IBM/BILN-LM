@@ -24,6 +24,7 @@ from sklearn.metrics import (matthews_corrcoef, root_mean_squared_error,
                              accuracy_score, f1_score,
                              precision_score, recall_score, mean_squared_error,
                              mean_absolute_error)
+from represent_peptides import calculate_molformer
 from tqdm import tqdm
 
 
@@ -244,40 +245,59 @@ def hpo(pred_task: str, learning_algorithm: Callable,
 
 
 def define_hestia_generator(
+    dataset: str,
     df: pd.DataFrame,
     similarity_metric: str,
     fp: str,
     radius: int
 ) -> HestiaDatasetGenerator:
-    sim_args = SimilarityArguments(
-        data_type='small molecule', similarity_metric=fp,
-        field_name='SMILES', min_threshold=0.,
-        threads=8, bits=2_048, radius=radius, distance=similarity_metric
-    )
+    if 'mmseqs' in similarity_metric:
+        sim_args = SimilarityArguments(
+            data_type='protein', similarity_metric=similarity_metric,
+            field_name='sequence', denominator='n_aligned'
+        )
+    elif 'molformer' in similarity_metric:
+        sim_args = SimilarityArguments(
+            data_type='small molecule', similarity_metric='embedding',
+            distance='cosine-np'
+        )
+        o_df = df.copy()
+        df = calculate_molformer(df.name.unique().item())
+    else:
+        distance = similarity_metric.replace('-graph_part', ''
+                                             ).replace('-nostrat', '')
+        sim_args = SimilarityArguments(
+            data_type='small molecule', similarity_metric=fp,
+            field_name='SMILES', min_threshold=0.,
+            threads=8, bits=2_048, radius=radius, distance=distance
+        )
     hdg = HestiaDatasetGenerator(df)
     hdg.calculate_similarity(sim_args)
-    hdg.calculate_partitions(
-        label_name='labels', min_threshold=0., similarity_args=sim_args
-    )
+    if 'molformer' in similarity_metric:
+        hdg.df = o_df
+    if 'graph_part' in similarity_metric:
+        hdg.calculate_partitions(
+            label_name='labels', min_threshold=0.,
+            similarity_args=sim_args, partition_algorithm='graph_part'
+        )
+    elif 'nostrat' in similarity_metric:
+        hdg.calculate_partitions(
+            min_threshold=0., similarity_args=sim_args
+        )
+    else:
+        hdg.calculate_partitions(
+            label_name='labels' if dataset not in REGRESSION_TASKS else None,
+            min_threshold=0., similarity_args=sim_args
+        )
     return hdg
 
 
-def experiment(dataset: str, model: str, similarity_metric: str,
-               fp: str, representation: str,
-               n_trials: int = 100, seed: int = 1, radius: int = 2):
+def experiment(dataset: str, model: str, representation: str,
+               hdg: HestiaDatasetGenerator, df: pd.DataFrame,
+               n_trials: int = 100, seed: int = 1):
     global best_model
-    part_dir = os.path.join(
-        os.path.dirname(__file__), '..', '..', 'partitions'
-    )
-    data_path = os.path.join(
-        os.path.dirname(__file__), '..', '..', 'downstream_data'
-    )
-    part_path = os.path.join(
-        part_dir, f"{dataset}_{similarity_metric}_{fp}_{radius}.gz")
-    os.makedirs(part_dir, exist_ok=True)
 
     np.random.seed(seed)
-
     if dataset in REGRESSION_TASKS:
         pred_task = 'reg'
         learning_algorithm = REGRESSION_MODELS[model]
@@ -288,17 +308,10 @@ def experiment(dataset: str, model: str, similarity_metric: str,
         raise ValueError(
             f"Dataset: {dataset} not in tasks: {', '.join(TASKS)}")
 
-    df = pd.read_csv(os.path.join(data_path, f'{dataset}.csv'))
     x = np.array(json.load(open(
         os.path.join('reps', f'{representation}_{dataset}.json'))))
     y = df.labels.to_numpy()
     results = []
-    if os.path.exists(part_path):
-        hdg = HestiaDatasetGenerator(df)
-        hdg.from_precalculated(part_path)
-    else:
-        hdg = define_hestia_generator(df, similarity_metric, fp, radius)
-        hdg.save_precalculated(part_path)
     for th, partitions in hdg.get_partitions(filter=0.185):
         train_idx = partitions['train']
         valid_idx = partitions['valid']
@@ -326,11 +339,33 @@ def experiment(dataset: str, model: str, similarity_metric: str,
 def main(dataset: str, model: str, similarity_metric: str,
          fp: str, representation: str, radius: int,
          n_trials: int = 200, n_seeds: int = 5):
+
+    part_dir = os.path.join(
+        os.path.dirname(__file__), '..', '..', 'partitions'
+    )
+    data_path = os.path.join(
+        os.path.dirname(__file__), '..', '..', 'downstream_data'
+    )
+    part_path = os.path.join(
+        part_dir, f"{dataset}_{similarity_metric}_{fp}_{radius}.gz"
+    )
+    os.makedirs(part_dir, exist_ok=True)
+
+    df = pd.read_csv(os.path.join(data_path, f'{dataset}.csv'))
+    df['name'] = dataset
+    if os.path.exists(part_path):
+        hdg = HestiaDatasetGenerator(df)
+        hdg.from_precalculated(part_path)
+    else:
+        hdg = define_hestia_generator(dataset, df, similarity_metric, fp,
+                                      radius)
+        hdg.save_precalculated(part_path)
+
     warnings.filterwarnings('ignore')
     optuna.logging.set_verbosity(optuna.logging.CRITICAL)
     results_dir = os.path.join(
         os.path.dirname(__file__), '..', '..',
-        'results_distance'
+        'results-new'
     )
     results_path = os.path.join(
         results_dir,
